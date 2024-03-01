@@ -23,37 +23,34 @@ import (
 )
 
 type statsEngine struct {
-	input   chan timeReport
-	targets map[string][]time.Duration
+	input chan timeReport
 }
 
-func newStatsEngine() *statsEngine {
-	input := make(chan timeReport, 10)
-	targets := make(map[string][]time.Duration)
+func newStatsEngine(qlen int) *statsEngine {
+	input := make(chan timeReport, qlen)
 	return &statsEngine{
-		input:   input,
-		targets: targets,
+		input: input,
 	}
 }
 
 func (s *statsEngine) start() {
-
+	targets := make(map[string][]time.Duration)
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case t := <-s.input:
 			slog.Debug("timeReport received", "peer", t.target, "rtt", t.rtt)
-			rtt, exists := s.targets[t.target]
+			rtt, exists := targets[t.target]
 			if exists {
 				rtt = append(rtt, t.rtt)
-				s.targets[t.target] = rtt[1:]
+				targets[t.target] = rtt[1:]
 				if t.rtt < 0 {
-					fmt.Printf("%v %+v\n", t.target, s.targets[t.target])
+					fmt.Printf("%v %+v\n", t.target, targets[t.target])
 				}
 			} else {
 				slog.Info("Target added to statsengine", "target", t.target)
 				newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
-				s.targets[t.target] = newList
+				targets[t.target] = newList
 			}
 
 		case <-ticker.C:

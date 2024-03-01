@@ -49,7 +49,7 @@ func main() {
 
 	dispatcher := newDispatcher(len(targets))
 	go dispatcher.start()
-	statsEngine := newStatsEngine()
+	statsEngine := newStatsEngine(len(targets))
 	go statsEngine.start()
 	go listener(dispatcher.getInput())
 
