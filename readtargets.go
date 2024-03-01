@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"log/slog"
 	"os"
 )
 
@@ -13,13 +14,21 @@ func readTargets(targetsfile string) ([]string, error) {
 		return nil, err
 	}
 	defer file.Close()
+	slog.Debug("Targets file opened", "file", targetsfile)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		targets = append(targets, scanner.Text())
+		target := scanner.Text()
+		if isIP(target) || isHostname(target) {
+			targets = append(targets, target)
+		} else {
+			slog.Warn("Invalid target", "target", target)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
+
+	slog.Debug("Targets read", "targets", targets)
 	return targets, nil
 }

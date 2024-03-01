@@ -19,7 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -39,10 +39,12 @@ func main() {
 	}
 
 	slogsetup(*logPtr, *debugPtr)
+	slog.Info("Starting", "version", version)
 
 	targets, err := readTargets(*filePtr)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Error reading targets", "error", err)
+		os.Exit(1)
 	}
 
 	dispatcher := newDispatcher()
