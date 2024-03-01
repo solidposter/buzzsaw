@@ -17,7 +17,6 @@ package main
 //
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -28,6 +27,9 @@ import (
 var version string // populated at build time
 
 func main() {
+	debugPtr := flag.Bool("d", false, "enable debug logging")
+	filePtr := flag.String("f", "targets.txt", "targets file")
+	logPtr := flag.String("l", "buzzsaw.log", "logfile")
 	versPtr := flag.Bool("V", false, "print version info")
 	flag.Parse()
 
@@ -36,7 +38,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	targets, err := readTargets("targets.txt")
+	slogsetup(*logPtr, *debugPtr)
+
+	targets, err := readTargets(*filePtr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,23 +74,4 @@ func main() {
 	go cm.start()
 
 	<-(chan int)(nil) // wait forever
-}
-
-func readTargets(targetsfile string) ([]string, error) {
-	targets := []string{}
-
-	file, err := os.Open(targetsfile)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		targets = append(targets, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return targets, nil
 }
