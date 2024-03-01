@@ -72,6 +72,7 @@ func main() {
 		time.Sleep(10 * time.Millisecond)
 		go v.start(statsEngine.getInput())
 	}
+	slog.Info("Pingers started")
 
 	// channel length monitor
 	cm := newChanmonitor()

@@ -33,6 +33,7 @@ func newStatsEngine(qlen int) *statsEngine {
 }
 
 func (s *statsEngine) start() {
+	slog.Info("Starting statsengine")
 	targets := make(map[string][]time.Duration)
 	ticker := time.NewTicker(1 * time.Second)
 	for {
@@ -44,11 +45,11 @@ func (s *statsEngine) start() {
 				rtt = append(rtt, t.rtt)
 				targets[t.target] = rtt[1:]
 			} else {
-				slog.Info("Target added to statsengine", "target", t.target)
+				slog.Debug("Target added to statsengine", "target", t.target)
 				newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
 				targets[t.target] = newList
 				if t.rtt == -1 {
-					slog.Info("Target is down", "target", t.target)
+					slog.Info("Target status is down", "target", t.target)
 				}
 			}
 		case <-ticker.C:
