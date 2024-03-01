@@ -38,20 +38,26 @@ func newStatsEngine() *statsEngine {
 
 func (s *statsEngine) start() {
 
+	ticker := time.NewTicker(1 * time.Second)
 	for {
-		t := <-s.input
-		slog.Debug("timeReport received", "peer", t.target, "rtt", t.rtt)
-		rtt, exists := s.targets[t.target]
-		if exists {
-			rtt = append(rtt, t.rtt)
-			s.targets[t.target] = rtt[1:]
-			if t.rtt < 0 {
-				fmt.Printf("%v %+v\n", t.target, s.targets[t.target])
+		select {
+		case t := <-s.input:
+			slog.Debug("timeReport received", "peer", t.target, "rtt", t.rtt)
+			rtt, exists := s.targets[t.target]
+			if exists {
+				rtt = append(rtt, t.rtt)
+				s.targets[t.target] = rtt[1:]
+				if t.rtt < 0 {
+					fmt.Printf("%v %+v\n", t.target, s.targets[t.target])
+				}
+			} else {
+				slog.Info("Target added to statsengine", "target", t.target)
+				newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
+				s.targets[t.target] = newList
 			}
-		} else {
-			slog.Info("Target added to statsengine", "target", t.target)
-			newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
-			s.targets[t.target] = newList
+
+		case <-ticker.C:
+			fmt.Println("statsengine do stuff")
 		}
 	}
 }
