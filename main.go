@@ -47,7 +47,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	dispatcher := newDispatcher()
+	dispatcher := newDispatcher(len(targets))
 	go dispatcher.start()
 	statsEngine := newStatsEngine()
 	go statsEngine.start()

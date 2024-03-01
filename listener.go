@@ -45,7 +45,12 @@ func listener(output chan<- icmpMessage) {
 			peer:   peer,
 			data:   rb,
 		}
-		// fmt.Printf("listener received ping from %+v\n", i.peer) // ugly debugging
-		output <- i
+
+		select {
+		case output <- i:
+			// Do nothing, output <- i is the action
+		default:
+			slog.Warn("Dispatcher queue full, packet dropped", "peer", peer)
+		}
 	}
 }

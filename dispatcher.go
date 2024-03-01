@@ -26,9 +26,9 @@ type dispatcher struct {
 	input   chan icmpMessage
 }
 
-func newDispatcher() *dispatcher {
+func newDispatcher(qlen int) *dispatcher {
 	pingers := make(map[string]chan icmpMessage)
-	input := make(chan icmpMessage, 10)
+	input := make(chan icmpMessage, qlen)
 	return &dispatcher{
 		pingers: pingers,
 		input:   input,
