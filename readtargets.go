@@ -22,7 +22,7 @@ func readTargets(targetsfile string) ([]string, error) {
 		if isIP(target) || isHostname(target) {
 			targets = append(targets, target)
 		} else {
-			slog.Warn("Invalid target", "target", target)
+			slog.Warn("Skipping invalid target", "target", target)
 		}
 	}
 	if err := scanner.Err(); err != nil {

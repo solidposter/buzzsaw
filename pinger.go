@@ -28,16 +28,22 @@ import (
 )
 
 type pinger struct {
-	target string
-	input  chan icmpMessage
+	target     string
+	resolvedIP net.IPAddr
+	input      chan icmpMessage
 }
 
-func newPinger(target string) *pinger {
+func newPinger(target string) (*pinger, error) {
+	resolvedIP, err := net.ResolveIPAddr("ip", target)
+	if err != nil {
+		return nil, err
+	}
 	input := make(chan icmpMessage, 10)
 	return &pinger{
-		target: target,
-		input:  input,
-	}
+		target:     target,
+		resolvedIP: *resolvedIP,
+		input:      input,
+	}, nil
 }
 
 func (s *pinger) start(output chan timeReport) {
@@ -124,5 +130,5 @@ func (s *pinger) getInput() chan icmpMessage {
 	return s.input
 }
 func (s *pinger) getTarget() string {
-	return s.target
+	return s.resolvedIP.String()
 }

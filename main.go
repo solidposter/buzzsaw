@@ -56,7 +56,12 @@ func main() {
 	// create and prep the pingers
 	var pingers []*pinger
 	for _, v := range targets {
-		c := newPinger(v)
+		c, err := newPinger(v)
+		if err != nil {
+			slog.Warn("Skipping invalid target", "error", err)
+			continue
+		}
+
 		dispatcher.addPinger(c.getTarget(), c.getInput())
 		pingers = append(pingers, c)
 	}
