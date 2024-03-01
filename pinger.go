@@ -17,7 +17,6 @@ package main
 //
 
 import (
-	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -99,7 +98,7 @@ func (s *pinger) start(output chan timeReport) {
 
 		select {
 		case <-ticker.C: // packet lost, retstart main loop
-			fmt.Printf("pinger packet loss for %v\n", s.target)
+			slog.Debug("Packet loss detected", "peer", s.target)
 			tr := timeReport{
 				target: s.target,
 				rtt:    -1,
@@ -117,14 +116,14 @@ func (s *pinger) start(output chan timeReport) {
 		}
 		switch rm.Type {
 		case ipv4.ICMPTypeEchoReply:
-			//fmt.Printf("pinger received echo reply from dispatcher %v RTT %v\n", s.target, t1.Sub(t0))
+			slog.Debug("Reply recived", "peer", s.target, "rtt", t1.Sub(t0))
 			tr := timeReport{
 				target: s.target,
 				rtt:    t1.Sub(t0),
 			}
 			output <- tr
 		default:
-			fmt.Printf("pinger received %+v from dispatcher\n", rm.Type)
+			slog.Warn("Non-reply reveived", "peer", s.target, "type", rm.Type)
 		}
 		// Wait for ticker
 		<-ticker.C

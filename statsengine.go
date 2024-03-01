@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -39,6 +40,7 @@ func (s *statsEngine) start() {
 
 	for {
 		t := <-s.input
+		slog.Debug("timeReport received", "peer", t.target, "rtt", t.rtt)
 		rtt, exists := s.targets[t.target]
 		if exists {
 			rtt = append(rtt, t.rtt)
@@ -47,11 +49,10 @@ func (s *statsEngine) start() {
 				fmt.Printf("%v %+v\n", t.target, s.targets[t.target])
 			}
 		} else {
-			fmt.Printf("stats engine adding target %v %v\n", t.target, t.rtt)
+			slog.Info("Target added to statsengine", "target", t.target)
 			newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
 			s.targets[t.target] = newList
 		}
-		// fmt.Printf("statsengne report %v %v\n", t.target, s.targets[t.target])
 	}
 }
 
