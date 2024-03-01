@@ -17,24 +17,28 @@ package main
 //
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"golang.org/x/net/icmp"
 )
 
-func startListener(output chan<- icmpMessage) {
+func listener(output chan<- icmpMessage) {
+	slog.Info("Starting listener")
 	pc, err := icmp.ListenPacket("ip4:1", "0.0.0.0")
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("ListenPacket() failed", "error", err)
+		os.Exit(1)
 	}
 
 	for {
 		rb := make([]byte, 1500)
-
 		n, peer, err := pc.ReadFrom(rb)
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("ReadFrom() failed", "error", err)
+			os.Exit(1)
 		}
+		slog.Debug("Packet received", "peer", peer)
 
 		i := icmpMessage{
 			length: n,

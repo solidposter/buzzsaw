@@ -51,7 +51,7 @@ func main() {
 	go dispatcher.start()
 	statsEngine := newStatsEngine()
 	go statsEngine.start()
-	go startListener(dispatcher.getInput())
+	go listener(dispatcher.getInput())
 
 	// create and prep the pingers
 	var pingers []*pinger
