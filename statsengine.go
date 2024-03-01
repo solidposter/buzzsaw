@@ -17,7 +17,6 @@ package main
 //
 
 import (
-	"fmt"
 	"log/slog"
 	"time"
 )
@@ -39,26 +38,60 @@ func (s *statsEngine) start() {
 	for {
 		select {
 		case t := <-s.input:
-			slog.Debug("timeReport received", "peer", t.target, "rtt", t.rtt)
+			slog.Debug("timeReport received", "target", t.target, "rtt", t.rtt)
 			rtt, exists := targets[t.target]
 			if exists {
 				rtt = append(rtt, t.rtt)
 				targets[t.target] = rtt[1:]
-				if t.rtt < 0 {
-					fmt.Printf("%v %+v\n", t.target, targets[t.target])
-				}
 			} else {
 				slog.Info("Target added to statsengine", "target", t.target)
 				newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
 				targets[t.target] = newList
+				if t.rtt == -1 {
+					slog.Info("Target is down", "target", t.target)
+				}
 			}
-
 		case <-ticker.C:
-			fmt.Println("statsengine do stuff")
+			for _, v := range statusToDown(targets) {
+				slog.Info("Status changed to down", "target", v)
+			}
+			for _, v := range statusToUp(targets) {
+				slog.Info("Status changed to up", "target", v)
+			}
 		}
 	}
 }
 
 func (s *statsEngine) getInput() chan timeReport {
 	return s.input
+}
+
+// A change from valid RTT from three consecutive -1 means means status change to down
+func statusToDown(targets map[string][]time.Duration) []string {
+	toDown := []string{}
+
+	for target, rttList := range targets {
+		l := len(rttList)
+		if rttList[l-4] != -1 {
+			if rttList[l-1] == -1 && rttList[l-2] == -1 && rttList[l-3] == -1 {
+				toDown = append(toDown, target)
+			}
+		}
+	}
+	return toDown
+}
+
+// A change from three conscutive -1 to not-1 means status change to up
+func statusToUp(targets map[string][]time.Duration) []string {
+	toUp := []string{}
+
+	for target, rttList := range targets {
+		l := len(rttList)
+		if rttList[l-2] == -1 && rttList[l-3] == -1 && rttList[l-4] == -1 {
+			if rttList[l-1] != -1 {
+				toUp = append(toUp, target)
+			}
+		}
+	}
+	return toUp
 }
