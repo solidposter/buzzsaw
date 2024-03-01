@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -52,12 +52,14 @@ func (s *pinger) start(output chan timeReport) {
 
 	dstaddr, err := net.ResolveIPAddr("ip", s.target)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("ResolveIPAddr() failed", "error", err)
+		os.Exit(1)
 	}
 
 	pc, err := icmp.ListenPacket("ip4:1", "0.0.0.0")
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("ListenPacket failed", "error", err)
+		os.Exit(1)
 	}
 	defer pc.Close() // will never happen
 
@@ -80,18 +82,20 @@ func (s *pinger) start(output chan timeReport) {
 
 		wb, err := msg.Marshal(nil)
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("Marshall of ICMP failed", "error", err)
+			os.Exit(1)
 		}
 		// Some ugly checking during dev
 		if len(s.input) != 0 {
-			log.Fatalf("Input queue for %v not empty\n", s.target)
+			slog.Error("Input queu should be empty", "target", s.target)
+			os.Exit(1)
 		}
 
 		t0 = time.Now()
 		if _, err := pc.WriteTo(wb, dstaddr); err != nil {
-			log.Fatal(err)
+			slog.Error("WriteTo() failed", "error", err)
+			os.Exit(1)
 		}
-		//fmt.Println("pinger sent packet to", s.target)
 
 		select {
 		case <-ticker.C: // packet lost, retstart main loop
@@ -108,7 +112,8 @@ func (s *pinger) start(output chan timeReport) {
 
 		rm, err := icmp.ParseMessage(1, inputMessage.data[:inputMessage.length])
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("ParseMessage failed", "error", err)
+			os.Exit(1)
 		}
 		switch rm.Type {
 		case ipv4.ICMPTypeEchoReply:
