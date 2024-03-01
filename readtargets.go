@@ -19,6 +19,7 @@ func readTargets(targetsfile string) ([]string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		target := scanner.Text()
+		slog.Debug("Target read", "target", target)
 		if isIP(target) || isHostname(target) {
 			targets = append(targets, target)
 		} else {
@@ -29,6 +30,6 @@ func readTargets(targetsfile string) ([]string, error) {
 		return nil, err
 	}
 
-	slog.Debug("Targets read", "targets", targets)
+	slog.Debug("Target list completed", "targets", targets)
 	return targets, nil
 }

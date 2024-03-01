@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 )
 
 type dispatcher struct {
@@ -35,15 +36,16 @@ func newDispatcher() *dispatcher {
 }
 
 func (d *dispatcher) start() {
+	slog.Info("Starting dispatcher")
 	for {
 		packet := <-d.input
 		target := packet.peer.String()
+		slog.Debug("Dispatcher received packet", "peer", target)
 		output, exists := d.pingers[target]
 		if exists {
-			// fmt.Println("dispatcher received from listener", packet.peer.String())
 			output <- packet
 		} else {
-			fmt.Printf("dispatcher unknown peer %+v\n", packet.peer)
+			slog.Warn("Dispatcher received packet from unknown peer", "peer", target)
 		}
 	}
 }
@@ -52,13 +54,14 @@ func (d *dispatcher) getInput() chan icmpMessage {
 	return d.input
 }
 
-func (d *dispatcher) addPinger(target string, clientchannel chan icmpMessage) {
+func (d *dispatcher) addPinger(target string, clientchannel chan icmpMessage) error {
 	_, exists := d.pingers[target]
 	if exists {
-		fmt.Println("target already exists", target)
-		return
+		err := fmt.Errorf("duplicate target %s", target)
+		return err
 	} else {
-		fmt.Println("dispatcher adding target", target)
 		d.pingers[target] = clientchannel
+		slog.Debug("Pinger added to dispatcher", "target", target)
+		return nil
 	}
 }

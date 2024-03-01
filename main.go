@@ -61,8 +61,10 @@ func main() {
 			slog.Warn("Skipping invalid target", "error", err)
 			continue
 		}
-
-		dispatcher.addPinger(c.getTarget(), c.getInput())
+		if err := dispatcher.addPinger(c.getTarget(), c.getInput()); err != nil {
+			slog.Warn("Skipping duplicate target", "error", err)
+			continue
+		}
 		pingers = append(pingers, c)
 	}
 	// start the pingers
