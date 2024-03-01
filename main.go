@@ -18,12 +18,23 @@ package main
 
 import (
 	"bufio"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
 )
 
+var version string // populated at build time
+
 func main() {
+	versPtr := flag.Bool("V", false, "print version info")
+	flag.Parse()
+
+	if *versPtr {
+		fmt.Println("Version:", version)
+		os.Exit(0)
+	}
 
 	targets, err := readTargets("targets.txt")
 	if err != nil {
