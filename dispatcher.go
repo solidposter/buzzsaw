@@ -43,7 +43,12 @@ func (d *dispatcher) start() {
 		slog.Debug("Dispatcher received packet", "peer", target)
 		output, exists := d.pingers[target]
 		if exists {
-			output <- packet
+			select {
+			case output <- packet:
+				// Do nothing, output <- packet is the action
+			default:
+				slog.Warn("Pinger queue full, packet dropped", "peer", target)
+			}
 		} else {
 			slog.Warn("Dispatcher received packet from unknown peer", "peer", target)
 		}
