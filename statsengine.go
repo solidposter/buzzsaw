@@ -72,25 +72,27 @@ func statusToDown(targets map[string][]time.Duration) []string {
 	toDown := []string{}
 
 	for target, rttList := range targets {
-		l := len(rttList)
-		if rttList[l-4] != -1 {
-			if rttList[l-1] == -1 && rttList[l-2] == -1 && rttList[l-3] == -1 {
-				toDown = append(toDown, target)
+		if l := len(rttList); l > 4 {
+			if rttList[l-4] != -1 {
+				if rttList[l-1] == -1 && rttList[l-2] == -1 && rttList[l-3] == -1 {
+					toDown = append(toDown, target)
+				}
 			}
 		}
 	}
 	return toDown
 }
 
-// A change from three conscutive -1 to not-1 means status change to up
+// A change from three conscutive -1 to valid RTT means status change to up
 func statusToUp(targets map[string][]time.Duration) []string {
 	toUp := []string{}
 
 	for target, rttList := range targets {
-		l := len(rttList)
-		if rttList[l-2] == -1 && rttList[l-3] == -1 && rttList[l-4] == -1 {
-			if rttList[l-1] != -1 {
-				toUp = append(toUp, target)
+		if l := len(rttList); l > 4 {
+			if rttList[l-2] == -1 && rttList[l-3] == -1 && rttList[l-4] == -1 {
+				if rttList[l-1] != -1 {
+					toUp = append(toUp, target)
+				}
 			}
 		}
 	}
