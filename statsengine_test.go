@@ -13,7 +13,7 @@ func TestStatusToDown(t *testing.T) {
 		want    []string
 	}{
 		{
-			name: "Targets valid",
+			name: "Match targetToDown",
 			targets: map[string][]time.Duration{
 				"targetIsDown":        targetIsDown,
 				"targetIsUp":          targetIsUp,
@@ -21,18 +21,28 @@ func TestStatusToDown(t *testing.T) {
 				"targetIsAlreadyUp":   targetIsAlreadyUp,
 				"targetToDown":        targetToDown,
 				"targetToUp":          targetToUp,
-				"targetFlappyToDown":  targetFlappyToDown,
-				"targetFlappyToUp":    targetFlappyToUp,
+				//"targetFlappyToDown":  targetFlappyToDown,
+				"targetFlappyToUp": targetFlappyToUp,
+				"empty":            targetEmpty,
+				"toShoort":         targetTooShort,
 			},
-			want: []string{"targetToDown", "targetFlappyToDown"},
+			want: []string{"targetToDown"},
 		},
 		{
-			name: "Targets too short",
+			name: "Match targetFlappyToDown",
 			targets: map[string][]time.Duration{
-				"empty":    targetEmpty,
-				"toShoort": targetTooShort,
+				"targetIsDown":        targetIsDown,
+				"targetIsUp":          targetIsUp,
+				"targetIsAlreadyDown": targetIsAlreadyDown,
+				"targetIsAlreadyUp":   targetIsAlreadyUp,
+				//"targetToDown":        targetToDown,
+				"targetToUp":         targetToUp,
+				"targetFlappyToDown": targetFlappyToDown,
+				"targetFlappyToUp":   targetFlappyToUp,
+				"empty":              targetEmpty,
+				"toShoort":           targetTooShort,
 			},
-			want: []string{},
+			want: []string{"targetFlappyToDown"},
 		},
 	}
 
@@ -53,7 +63,7 @@ func TestStatusToUp(t *testing.T) {
 		want    []string
 	}{
 		{
-			name: "Targets valid",
+			name: "Match targetToUp",
 			targets: map[string][]time.Duration{
 				"targetIsDown":        targetIsDown,
 				"targetIsUp":          targetIsUp,
@@ -62,17 +72,27 @@ func TestStatusToUp(t *testing.T) {
 				"targetToDown":        targetToDown,
 				"targetToUp":          targetToUp,
 				"targetFlappyToDown":  targetFlappyToDown,
-				"targetFlappyToUp":    targetFlappyToUp,
-			},
-			want: []string{"targetToUp", "targetFlappyToUp"},
-		},
-		{
-			name: "Targets too short",
-			targets: map[string][]time.Duration{
+				//"targetFlappyToUp": targetFlappyToUp,
 				"empty":    targetEmpty,
 				"toShoort": targetTooShort,
 			},
-			want: []string{},
+			want: []string{"targetToUp"},
+		},
+		{
+			name: "Match targetFlappyToUp",
+			targets: map[string][]time.Duration{
+				"targetIsDown":        targetIsDown,
+				"targetIsUp":          targetIsUp,
+				"targetIsAlreadyDown": targetIsAlreadyDown,
+				"targetIsAlreadyUp":   targetIsAlreadyUp,
+				"targetToDown":        targetToDown,
+				//"targetToUp":         targetToUp,
+				"targetFlappyToDown": targetFlappyToDown,
+				"targetFlappyToUp":   targetFlappyToUp,
+				"empty":              targetEmpty,
+				"toShoort":           targetTooShort,
+			},
+			want: []string{"targetFlappyToUp"},
 		},
 	}
 
