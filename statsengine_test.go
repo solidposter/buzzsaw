@@ -7,7 +7,6 @@ import (
 )
 
 func TestStatusToDown(t *testing.T) {
-	// Test cases
 	tests := []struct {
 		name    string
 		targets map[string][]time.Duration
@@ -35,7 +34,6 @@ func TestStatusToDown(t *testing.T) {
 			},
 			want: []string{},
 		},
-		// Add more test cases as needed
 	}
 
 	for _, tc := range tests {
@@ -49,7 +47,6 @@ func TestStatusToDown(t *testing.T) {
 }
 
 func TestStatusToUp(t *testing.T) {
-	// Test cases
 	tests := []struct {
 		name    string
 		targets map[string][]time.Duration
@@ -77,7 +74,6 @@ func TestStatusToUp(t *testing.T) {
 			},
 			want: []string{},
 		},
-		// Add more test cases as needed
 	}
 
 	for _, tc := range tests {
