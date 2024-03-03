@@ -17,7 +17,7 @@ package main
 //
 
 import (
-	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -34,16 +34,24 @@ func newChanmonitor() *chanmonitor {
 	}
 }
 
+const channelWarning string = "Channel overload"
+
 func (c *chanmonitor) start() {
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	for {
 		<-ticker.C
-		fmt.Printf("dispatcher channel %v/%v\n", len(c.dispatcherChan), cap(c.dispatcherChan))
-		fmt.Printf("statsengine channel %v/%v\n", len(c.statsengineChan), cap(c.statsengineChan))
-		fmt.Printf("pinger channels: %v\n", len(c.pingerChans))
+		if len(c.dispatcherChan) > cap(c.dispatcherChan)/2 {
+			slog.Warn(channelWarning, "channel", "dispatcher", "length", len(c.dispatcherChan), "capacity", cap(c.dispatcherChan))
+		}
+
+		if len(c.statsengineChan) > cap(c.statsengineChan)/2 {
+			slog.Warn(channelWarning, "channel", "statsengine", "length", len(c.statsengineChan), "capacity", cap(c.statsengineChan))
+		}
+
+		//fmt.Printf("pinger channels: %v\n", len(c.pingerChans))
 		for k, v := range c.pingerChans {
-			if len(v) > (cap(v) / 2) {
-				fmt.Printf("pinger %v channel %v/%v\n", k, len(v), cap(v))
+			if len(v) > cap(v)/2 {
+				slog.Warn(channelWarning, "channel", "pinger", "pinger", k, "length", len(v), "capacity", cap(v))
 			}
 		}
 	}
