@@ -54,6 +54,7 @@ func main() {
 	go listener(dispatcher.getInput())
 
 	// create and prep the pingers
+	slog.Info("Preparing pingers", "count", len(targets))
 	var pingers []*pinger
 	for _, v := range targets {
 		c, err := newPinger(v)
@@ -68,6 +69,7 @@ func main() {
 		pingers = append(pingers, c)
 	}
 	// start the pingers
+	slog.Info("Starting pingers", "count", len(pingers))
 	for _, v := range pingers {
 		time.Sleep(10 * time.Millisecond)
 		go v.start(statsEngine.getInput())
