@@ -42,11 +42,7 @@ func (s *statsEngine) start() {
 		if exists {
 			rtt = append(rtt, t.rtt)
 			targets[t.target] = rtt[1:]
-			if isStatusToDown(rtt) {
-				slog.Info("Status changed to down", "target", t.target)
-			} else if isStatusToUp(rtt) {
-				slog.Info("Status changed to up", "target", t.target)
-			}
+			logStatusChange(t.target, targets[t.target])
 		} else {
 			slog.Debug("Target added to statsengine", "target", t.target)
 			newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
@@ -62,11 +58,11 @@ func (s *statsEngine) getInput() chan timeReport {
 	return s.input
 }
 
-func logStatusToDown(targets map[string][]time.Duration) {
-	for target, rttList := range targets {
-		if isStatusToDown(rttList) {
-			slog.Info("Status changed to down", "target", target)
-		}
+func logStatusChange(target string, rttList []time.Duration) {
+	if isStatusToDown(rttList) {
+		slog.Info("Status changed to down", "target", target)
+	} else if isStatusToUp(rttList) {
+		slog.Info("Status changed to up", "target", target)
 	}
 }
 
@@ -80,14 +76,6 @@ func isStatusToDown(rttList []time.Duration) bool {
 		}
 	}
 	return false
-}
-
-func logStatusToUp(targets map[string][]time.Duration) {
-	for target, rttList := range targets {
-		if isStatusToUp(rttList) {
-			slog.Info("Status changed to up", "target", target)
-		}
-	}
 }
 
 // A change from three conscutive -1 to valid RTT means status change to up
