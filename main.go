@@ -29,7 +29,7 @@ var version string // populated at build time
 func main() {
 	debugPtr := flag.Bool("d", false, "enable debug logging")
 	filePtr := flag.String("f", "targets.txt", "targets file")
-	logPtr := flag.String("l", "buzzsaw.log", "logfile")
+	logPtr := flag.String("l", "", "logfile")
 	versPtr := flag.Bool("V", false, "print version info")
 	flag.Parse()
 
