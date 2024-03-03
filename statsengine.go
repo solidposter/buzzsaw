@@ -35,7 +35,7 @@ func newStatsEngine(qlen int) *statsEngine {
 func (s *statsEngine) start() {
 	slog.Info("Starting statsengine")
 	targets := make(map[string][]time.Duration)
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(1100 * time.Millisecond)
 	for {
 		select {
 		case t := <-s.input:
