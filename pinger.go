@@ -26,6 +26,8 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+const IcmpDataString = "buzzsaw"
+
 type pinger struct {
 	target     string
 	resolvedIP net.IPAddr
@@ -71,7 +73,7 @@ func (s *pinger) start(output chan timeReport) {
 		sendEcho(pc, dstaddr, seq, id)
 		tSend := time.Now()
 
-		for {
+		for { // Run waitloop until ticker.C
 			select {
 			case <-ticker.C:
 				slog.Debug("Packet loss detected", "peer", s.target)
@@ -81,18 +83,13 @@ func (s *pinger) start(output chan timeReport) {
 				}
 				output <- tr
 			case inputMessage = <-s.input:
-				rm, err := icmp.ParseMessage(1, inputMessage.data[:inputMessage.length])
-				if err != nil {
-					slog.Error("ParseMessage failed", "error", err)
-					os.Exit(1)
-				}
-				if rm.Type != ipv4.ICMPTypeEchoReply {
-					slog.Warn("Non-echo response recived", "peer", s.target)
+				slog.Debug("Message recived", "peer", s.target)
+				if !isValidResponse(inputMessage, seq, id) {
+					slog.Warn("Invalid packet", "peer", s.target)
 					continue
 				}
 
 				tRecv := time.Now() // Valid packet received
-				slog.Debug("Reply recived", "peer", s.target, "rtt", tRecv.Sub(tSend))
 				tr := timeReport{
 					target: s.target,
 					rtt:    tRecv.Sub(tSend),
@@ -112,10 +109,32 @@ func (s *pinger) getTarget() string {
 	return s.resolvedIP.String()
 }
 
-func sendEcho(conn *icmp.PacketConn, target *net.IPAddr, seq int, id int) {
-	icmpBody := newIcmpEcho(seq, id)
+func isValidResponse(message icmpMessage, seq int, id int) bool {
+	icmpMessage, err := icmp.ParseMessage(1, message.data[:message.length])
+	if err != nil {
+		slog.Error("ParseMessage failed", "error", err)
+		os.Exit(1)
+	}
+	if icmpMessage.Type != ipv4.ICMPTypeEchoReply {
+		return false
+	}
+	echoReply, ok := icmpMessage.Body.(*icmp.Echo)
+	if !ok {
+		slog.Error("Failed to decode ICMP echo reply")
+		os.Exit(1)
+	}
 
-	encoded, err := icmpBody.Marshal(nil)
+	if seq == echoReply.Seq && id == echoReply.ID && IcmpDataString == string(echoReply.Data) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func sendEcho(conn *icmp.PacketConn, target *net.IPAddr, seq int, id int) {
+	icmpMessage := newIcmpEcho(seq, id)
+
+	encoded, err := icmpMessage.Marshal(nil)
 	if err != nil {
 		slog.Error("Marshall of ICMP failed", "error", err)
 		os.Exit(1)
@@ -134,7 +153,7 @@ func newIcmpEcho(seq int, id int) *icmp.Message {
 		Body: &icmp.Echo{
 			ID:   id,
 			Seq:  seq,
-			Data: []byte("buzzsaw"),
+			Data: []byte(IcmpDataString),
 		},
 	}
 }
