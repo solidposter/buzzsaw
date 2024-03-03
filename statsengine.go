@@ -35,26 +35,25 @@ func newStatsEngine(qlen int) *statsEngine {
 func (s *statsEngine) start() {
 	slog.Info("Starting statsengine")
 	targets := make(map[string][]time.Duration)
-	ticker := time.NewTicker(1100 * time.Millisecond)
 	for {
-		select {
-		case t := <-s.input:
-			slog.Debug("timeReport received", "target", t.target, "rtt", t.rtt)
-			rtt, exists := targets[t.target]
-			if exists {
-				rtt = append(rtt, t.rtt)
-				targets[t.target] = rtt[1:]
-			} else {
-				slog.Debug("Target added to statsengine", "target", t.target)
-				newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
-				targets[t.target] = newList
-				if t.rtt == -1 {
-					slog.Info("Target status is down", "target", t.target)
-				}
+		t := <-s.input
+		slog.Debug("timeReport received", "target", t.target, "rtt", t.rtt)
+		rtt, exists := targets[t.target]
+		if exists {
+			rtt = append(rtt, t.rtt)
+			targets[t.target] = rtt[1:]
+			if isStatusToDown(rtt) {
+				slog.Info("Status changed to down", "target", t.target)
+			} else if isStatusToUp(rtt) {
+				slog.Info("Status changed to up", "target", t.target)
 			}
-		case <-ticker.C:
-			logStatusToDown(targets)
-			logStatusToUp(targets)
+		} else {
+			slog.Debug("Target added to statsengine", "target", t.target)
+			newList := []time.Duration{t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt, t.rtt}
+			targets[t.target] = newList
+			if t.rtt == -1 {
+				slog.Info("Target status is down", "target", t.target)
+			}
 		}
 	}
 }
