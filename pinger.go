@@ -69,30 +69,12 @@ func (s *pinger) start(output chan timeReport) {
 		if seq++; seq > 65534 {
 			seq = 1
 		}
-		msg := &icmp.Message{
-			Type: ipv4.ICMPTypeEcho,
-			Code: 0,
-			Body: &icmp.Echo{
-				ID:   id,
-				Seq:  seq,
-				Data: []byte("buzzsaw"),
-			},
-		}
+		sendEcho(pc, dstaddr, seq, id)
+		t0 = time.Now()
 
-		wb, err := msg.Marshal(nil)
-		if err != nil {
-			slog.Error("Marshall of ICMP failed", "error", err)
-			os.Exit(1)
-		}
 		// Some ugly checking during dev
 		if len(s.input) != 0 {
 			slog.Error("Input queu should be empty", "target", s.target)
-			os.Exit(1)
-		}
-
-		t0 = time.Now()
-		if _, err := pc.WriteTo(wb, dstaddr); err != nil {
-			slog.Error("WriteTo() failed", "error", err)
 			os.Exit(1)
 		}
 
@@ -135,4 +117,31 @@ func (s *pinger) getInput() chan icmpMessage {
 }
 func (s *pinger) getTarget() string {
 	return s.resolvedIP.String()
+}
+
+func sendEcho(conn *icmp.PacketConn, target *net.IPAddr, seq int, id int) {
+	icmpBody := newIcmpEcho(seq, id)
+
+	encoded, err := icmpBody.Marshal(nil)
+	if err != nil {
+		slog.Error("Marshall of ICMP failed", "error", err)
+		os.Exit(1)
+	}
+
+	if _, err := conn.WriteTo(encoded, target); err != nil {
+		slog.Error("WriteTo() failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func newIcmpEcho(seq int, id int) *icmp.Message {
+	return &icmp.Message{
+		Type: ipv4.ICMPTypeEcho,
+		Code: 0,
+		Body: &icmp.Echo{
+			ID:   id,
+			Seq:  seq,
+			Data: []byte("buzzsaw"),
+		},
+	}
 }
