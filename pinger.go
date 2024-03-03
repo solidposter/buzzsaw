@@ -47,7 +47,6 @@ func newPinger(target string) (*pinger, error) {
 
 func (s *pinger) start(output chan timeReport) {
 	var inputMessage icmpMessage
-	var t0, t1 time.Time // send and receive timestamps
 
 	dstaddr, err := net.ResolveIPAddr("ip", s.target)
 	if err != nil {
@@ -70,45 +69,39 @@ func (s *pinger) start(output chan timeReport) {
 			seq = 1
 		}
 		sendEcho(pc, dstaddr, seq, id)
-		t0 = time.Now()
+		tSend := time.Now()
 
-		// Some ugly checking during dev
-		if len(s.input) != 0 {
-			slog.Error("Input queu should be empty", "target", s.target)
-			os.Exit(1)
-		}
+		for {
+			select {
+			case <-ticker.C:
+				slog.Debug("Packet loss detected", "peer", s.target)
+				tr := timeReport{
+					target: s.target,
+					rtt:    -1,
+				}
+				output <- tr
+			case inputMessage = <-s.input:
+				rm, err := icmp.ParseMessage(1, inputMessage.data[:inputMessage.length])
+				if err != nil {
+					slog.Error("ParseMessage failed", "error", err)
+					os.Exit(1)
+				}
+				if rm.Type != ipv4.ICMPTypeEchoReply {
+					slog.Warn("Non-echo response recived", "peer", s.target)
+					continue
+				}
 
-		select {
-		case <-ticker.C: // packet lost, retstart main loop
-			slog.Debug("Packet loss detected", "peer", s.target)
-			tr := timeReport{
-				target: s.target,
-				rtt:    -1,
+				tRecv := time.Now() // Valid packet received
+				slog.Debug("Reply recived", "peer", s.target, "rtt", tRecv.Sub(tSend))
+				tr := timeReport{
+					target: s.target,
+					rtt:    tRecv.Sub(tSend),
+				}
+				output <- tr
+				<-ticker.C
 			}
-			output <- tr
-			continue
-		case inputMessage = <-s.input: // packet received
-			t1 = time.Now()
+			break
 		}
-
-		rm, err := icmp.ParseMessage(1, inputMessage.data[:inputMessage.length])
-		if err != nil {
-			slog.Error("ParseMessage failed", "error", err)
-			os.Exit(1)
-		}
-		switch rm.Type {
-		case ipv4.ICMPTypeEchoReply:
-			slog.Debug("Reply recived", "peer", s.target, "rtt", t1.Sub(t0))
-			tr := timeReport{
-				target: s.target,
-				rtt:    t1.Sub(t0),
-			}
-			output <- tr
-		default:
-			slog.Warn("Non-reply reveived", "peer", s.target, "type", rm.Type)
-		}
-		// Wait for ticker
-		<-ticker.C
 	}
 }
 
@@ -129,7 +122,7 @@ func sendEcho(conn *icmp.PacketConn, target *net.IPAddr, seq int, id int) {
 	}
 
 	if _, err := conn.WriteTo(encoded, target); err != nil {
-		slog.Error("WriteTo() failed", "error", err)
+		slog.Error("Sending packet failed", "error", err)
 		os.Exit(1)
 	}
 }
