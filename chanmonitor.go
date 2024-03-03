@@ -37,6 +37,7 @@ func newChanmonitor() *chanmonitor {
 const channelWarning string = "Channel overload"
 
 func (c *chanmonitor) start() {
+	slog.Info("Starting channel monitor")
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	for {
 		<-ticker.C
