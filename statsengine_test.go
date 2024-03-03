@@ -1,107 +1,54 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 	"time"
 )
 
-func TestStatusToDown(t *testing.T) {
-	tests := []struct {
-		name    string
-		targets map[string][]time.Duration
-		want    []string
+func TestIsStatusToDown(t *testing.T) {
+	var tests = []struct {
+		expected bool
+		rttList  []time.Duration
 	}{
-		{
-			name: "Match targetToDown",
-			targets: map[string][]time.Duration{
-				"targetIsDown":        targetIsDown,
-				"targetIsUp":          targetIsUp,
-				"targetIsAlreadyDown": targetIsAlreadyDown,
-				"targetIsAlreadyUp":   targetIsAlreadyUp,
-				"targetToDown":        targetToDown,
-				"targetToUp":          targetToUp,
-				//"targetFlappyToDown":  targetFlappyToDown,
-				"targetFlappyToUp": targetFlappyToUp,
-				"empty":            targetEmpty,
-				"toShoort":         targetTooShort,
-			},
-			want: []string{"targetToDown"},
-		},
-		{
-			name: "Match targetFlappyToDown",
-			targets: map[string][]time.Duration{
-				"targetIsDown":        targetIsDown,
-				"targetIsUp":          targetIsUp,
-				"targetIsAlreadyDown": targetIsAlreadyDown,
-				"targetIsAlreadyUp":   targetIsAlreadyUp,
-				//"targetToDown":        targetToDown,
-				"targetToUp":         targetToUp,
-				"targetFlappyToDown": targetFlappyToDown,
-				"targetFlappyToUp":   targetFlappyToUp,
-				"empty":              targetEmpty,
-				"toShoort":           targetTooShort,
-			},
-			want: []string{"targetFlappyToDown"},
-		},
+		{false, targetIsDown},
+		{false, targetIsUp},
+		{false, targetIsAlreadyDown},
+		{false, targetIsAlreadyUp},
+		{true, targetToDown},
+		{false, targetToUp},
+		{true, targetFlappyToDown},
+		{false, targetFlappyToUp},
+		{false, targetEmpty},
+		{false, targetTooShort},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := statusToDown(tc.targets)
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("statusToDown(%v) = %v; want %v", tc.targets, got, tc.want)
-			}
-		})
+	for _, test := range tests {
+		if output := isStatusToDown(test.rttList); output != test.expected {
+			t.Errorf("Output %t not equal to expected %t", output, test.expected)
+		}
 	}
 }
 
-func TestStatusToUp(t *testing.T) {
-	tests := []struct {
-		name    string
-		targets map[string][]time.Duration
-		want    []string
+func TestIsStatusToUp(t *testing.T) {
+	var tests = []struct {
+		expected bool
+		rttList  []time.Duration
 	}{
-		{
-			name: "Match targetToUp",
-			targets: map[string][]time.Duration{
-				"targetIsDown":        targetIsDown,
-				"targetIsUp":          targetIsUp,
-				"targetIsAlreadyDown": targetIsAlreadyDown,
-				"targetIsAlreadyUp":   targetIsAlreadyUp,
-				"targetToDown":        targetToDown,
-				"targetToUp":          targetToUp,
-				"targetFlappyToDown":  targetFlappyToDown,
-				//"targetFlappyToUp": targetFlappyToUp,
-				"empty":    targetEmpty,
-				"toShoort": targetTooShort,
-			},
-			want: []string{"targetToUp"},
-		},
-		{
-			name: "Match targetFlappyToUp",
-			targets: map[string][]time.Duration{
-				"targetIsDown":        targetIsDown,
-				"targetIsUp":          targetIsUp,
-				"targetIsAlreadyDown": targetIsAlreadyDown,
-				"targetIsAlreadyUp":   targetIsAlreadyUp,
-				"targetToDown":        targetToDown,
-				//"targetToUp":         targetToUp,
-				"targetFlappyToDown": targetFlappyToDown,
-				"targetFlappyToUp":   targetFlappyToUp,
-				"empty":              targetEmpty,
-				"toShoort":           targetTooShort,
-			},
-			want: []string{"targetFlappyToUp"},
-		},
+		{false, targetIsDown},
+		{false, targetIsUp},
+		{false, targetIsAlreadyDown},
+		{false, targetIsAlreadyUp},
+		{false, targetToDown},
+		{true, targetToUp},
+		{false, targetFlappyToDown},
+		{true, targetFlappyToUp},
+		{false, targetEmpty},
+		{false, targetTooShort},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := statusToUp(tc.targets)
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("statusToDown(%v) = %v; want %v", tc.targets, got, tc.want)
-			}
-		})
+	for _, test := range tests {
+		if output := isStatusToUp(test.rttList); output != test.expected {
+			t.Errorf("Output %t not equal to expected %t", output, test.expected)
+		}
 	}
 }

@@ -53,12 +53,8 @@ func (s *statsEngine) start() {
 				}
 			}
 		case <-ticker.C:
-			for _, v := range statusToDown(targets) {
-				slog.Info("Status changed to down", "target", v)
-			}
-			for _, v := range statusToUp(targets) {
-				slog.Info("Status changed to up", "target", v)
-			}
+			logStatusToDown(targets)
+			logStatusToUp(targets)
 		}
 	}
 }
@@ -67,34 +63,42 @@ func (s *statsEngine) getInput() chan timeReport {
 	return s.input
 }
 
-// A change from valid RTT from three consecutive -1 means means status change to down
-func statusToDown(targets map[string][]time.Duration) []string {
-	toDown := []string{}
-
+func logStatusToDown(targets map[string][]time.Duration) {
 	for target, rttList := range targets {
-		if l := len(rttList); l > 4 {
-			if rttList[l-4] != -1 {
-				if rttList[l-1] == -1 && rttList[l-2] == -1 && rttList[l-3] == -1 {
-					toDown = append(toDown, target)
-				}
+		if isStatusToDown(rttList) {
+			slog.Info("Status changed to down", "target", target)
+		}
+	}
+}
+
+// A change from valid RTT from three consecutive -1 means means status change to down
+func isStatusToDown(rttList []time.Duration) bool {
+	if l := len(rttList); l > 4 {
+		if rttList[l-4] != -1 {
+			if rttList[l-1] == -1 && rttList[l-2] == -1 && rttList[l-3] == -1 {
+				return true
 			}
 		}
 	}
-	return toDown
+	return false
+}
+
+func logStatusToUp(targets map[string][]time.Duration) {
+	for target, rttList := range targets {
+		if isStatusToUp(rttList) {
+			slog.Info("Status changed to up", "target", target)
+		}
+	}
 }
 
 // A change from three conscutive -1 to valid RTT means status change to up
-func statusToUp(targets map[string][]time.Duration) []string {
-	toUp := []string{}
-
-	for target, rttList := range targets {
-		if l := len(rttList); l > 4 {
-			if rttList[l-2] == -1 && rttList[l-3] == -1 && rttList[l-4] == -1 {
-				if rttList[l-1] != -1 {
-					toUp = append(toUp, target)
-				}
+func isStatusToUp(rttList []time.Duration) bool {
+	if l := len(rttList); l > 4 {
+		if rttList[l-2] == -1 && rttList[l-3] == -1 && rttList[l-4] == -1 {
+			if rttList[l-1] != -1 {
+				return true
 			}
 		}
 	}
-	return toUp
+	return false
 }
