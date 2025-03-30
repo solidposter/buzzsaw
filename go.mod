@@ -1,6 +1,7 @@
 module github.com/solidposter/buzzsaw
 
-go 1.21.0
+go 1.23.0
+
 toolchain go1.23.7
 
 require (
